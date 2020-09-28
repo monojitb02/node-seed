@@ -7,6 +7,4 @@ services:
      dockerfile: Dockerfile.test
      args:
        NODE_ENV: test
-   ports:
-     - "8080:80"
    command: npm run test

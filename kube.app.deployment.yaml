@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: node-seed-app
+  labels:
+    app: node-seed-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: node-seed-pod
+  template:
+    metadata:
+      labels:
+        app: node-seed-pod
+    spec:
+      containers:
+        # just for demo purpose mongo and redis are kept in same pod
+        # it will be kept in a seperate services in prod environment
+      - image: redis
+        imagePullPolicy: Always
+        name: node-seed-redis
+      - image: mongo
+        imagePullPolicy: Always
+        name: node-seed-mongo
+      - image: monojitb02/node-seed
+        imagePullPolicy: Always
+        name: node-seed
+        env:
+          - name: DB_URL
+            value: "localhost/Platform_Core"
+          - name: REDIS_URL
+            value: "redis"
+          - name: PORT
+            value: "3000"
+        ports:
+          - containerPort: 3000

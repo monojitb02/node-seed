@@ -5,16 +5,16 @@ services:
     image: redis:latest
     container_name: core_app_redis
     restart: always
-    ports:
-      - 6379:6379
+    # ports:
+    #   - 6379:6379
   mongo:
     image: mongo:latest
     container_name: core_app_mongo
     restart: always
     volumes:
       - 'mongo:/data/db'
-    ports:
-      - 27017:27017
+    # ports:
+    #   - 27017:27017
   api-server:
     build:
       context: .
@@ -22,6 +22,7 @@ services:
     restart: always
     depends_on:
       - mongo
+      - redis
     ports:
       - 3000:3000
     environment:

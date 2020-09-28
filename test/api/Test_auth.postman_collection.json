@@ -1,0 +1,364 @@
+{
+	"info": {
+		"_postman_id": "a1da4474-457e-41f4-94d4-ba3be0af5e18",
+		"name": "Test auth",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "check health",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "23d92e73-5795-42ea-86a1-4323712d2962",
+						"exec": [
+							"postman.setEnvironmentVariable(\"base_url\", \"http://localhost:3000\");\r",
+							"postman.setEnvironmentVariable(\"api_base\", \"api/platform/core/v1\");\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "70d366ab-2ccb-49a6-b1dc-123c61c7e2f4",
+						"exec": [
+							"pm.test('Service is healthy',()=>{\r",
+							"    pm.response.to.have.status(200);\r",
+							"})"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/{{api_base}}/system/health",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"{{api_base}}",
+						"system",
+						"health"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "signup",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "db121ae1-ae54-44d6-b984-97b5bfbb04db",
+						"exec": [
+							"var jsonData = JSON.parse(responseBody);\r",
+							"postman.setEnvironmentVariable(\"tempSessionToken\", jsonData.tempSessionToken);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"phone\": \"9876543210\",\r\n  \"countryCode\": \"+91\",\r\n  \"role\": \"admin\"\r\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/{{api_base}}/auth/signup",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"{{api_base}}",
+						"auth",
+						"signup"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "verify OTP",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "3c09c239-bef1-49fc-9450-300951ce422a",
+						"exec": [
+							"const jsonData = JSON.parse(responseBody);\r",
+							"pm.test(\"Verification successfully done\",() => {\r",
+							"    pm.expect(jsonData.message).to.be.eql(\"Verification success\");\r",
+							"});\r",
+							"postman.setEnvironmentVariable(\"sessionToken\", jsonData.sessionToken);\r",
+							"postman.setEnvironmentVariable(\"secretToken\", jsonData.secretToken);\r",
+							"postman.setEnvironmentVariable(\"secretToken\", jsonData.message);\r",
+							"postman.setEnvironmentVariable(\"sessionHeader\", `Basic ${btoa(jsonData.sessionToken)}`);\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Accept",
+						"type": "text",
+						"value": "application/json"
+					},
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"tempSessionToken\": \"{{tempSessionToken}}\",\r\n  \"verificationCode\": \"1234\",\r\n  \"resetAll\": true\r\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/{{api_base}}/auth/verify",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"{{api_base}}",
+						"auth",
+						"verify"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "set password",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "721245d3-961a-4735-be17-7fb021f95b95",
+						"exec": [
+							"pm.test(\"Setting password successfully done\",() => {\r",
+							"    pm.response.to.have.status(202);\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Accept",
+						"type": "text",
+						"value": "application/json"
+					},
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "{{sessionHeader}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"password\": \"testPassw0rd\"\r\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/{{api_base}}/auth/password",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"{{api_base}}",
+						"auth",
+						"password"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "login with new password",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "f75aed3f-cbf2-436c-9d3b-e0a0592f28fa",
+						"exec": [
+							"pm.test(\"login successfully done\",() => {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"const jsonData = JSON.parse(responseBody);\r",
+							"postman.setEnvironmentVariable(\"sessionHeader\", `Basic ${btoa(jsonData.sessionToken)}`);\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"type": "text",
+						"value": "application/json"
+					},
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"userIdentity\": \"+91-9876543210\",\r\n  \"password\": \"testPassw0rd\"\r\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/{{api_base}}/auth/login",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"{{api_base}}",
+						"auth",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "update profile",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "3a5e2dca-d653-453d-94d1-e3961b09fd08",
+						"exec": [
+							"pm.test(\"USer profile updated successfully\",() => {\r",
+							"    pm.response.to.have.status(202);\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Accept",
+						"type": "text",
+						"value": "application/json"
+					},
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"type": "text",
+						"value": "{{sessionHeader}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"name\": {\r\n    \"first\": \"fName\",\r\n    \"middle\": \"mName\",\r\n    \"last\": \"lName\"\r\n  },\r\n  \"address\": {\r\n    \"city\": \"city1\",\r\n    \"state\": \"st1\",\r\n    \"country\": \"India\",\r\n    \"countryCode\": \"IN\"\r\n  },\r\n  \"employeeId\": \"E00001\",\r\n  \"dob\": \"1990-09-28\"\r\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/{{api_base}}/user/profile",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"{{api_base}}",
+						"user",
+						"profile"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "read all users Copy",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "ab7b2d93-eda7-40df-9599-cfd57fe9b640",
+						"exec": [
+							"pm.test(\"Get user works fine\",() => {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"type": "text",
+						"value": "application/json"
+					},
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"type": "text",
+						"value": "{{sessionHeader}}"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/{{api_base}}/users",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"{{api_base}}",
+						"users"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"protocolProfileBehavior": {}
+}
