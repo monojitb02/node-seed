@@ -1,0 +1,118 @@
+<!-- HTML for static distribution bundle build -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Swagger UI</title>
+  <link rel="stylesheet" type="text/css" href="./swagger-ui.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <link rel="icon" type="image/png" href="./favicon-32x32.png" sizes="32x32" />
+  <link rel="icon" type="image/png" href="./favicon-16x16.png" sizes="16x16" />
+  <style>
+    html {
+      box-sizing: border-box;
+      overflow: -moz-scrollbars-vertical;
+      overflow-y: scroll;
+    }
+
+    *,
+    *:before,
+    *:after {
+      box-sizing: inherit;
+    }
+
+    body {
+      margin: 0;
+      background: #fafafa;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="swagger-ui"></div>
+
+  <script src="./swagger-ui-bundle.js"> </script>
+  <script src="./swagger-ui-standalone-preset.js"> </script>
+  <script>
+    window.onload = function () {
+      let sessionHeader;
+      var url = window.location.search.match(/url=([^&]+)/);
+      if (url && url.length > 1) {
+        url = decodeURIComponent(url[1]);
+      } else {
+        url = 'swagger.json';
+      }
+
+      // Build a system
+      const ui = SwaggerUIBundle({
+        urls: [{
+          url: "/api/platform/core/v1/doc/swagger.json", name: "Core",
+        }],
+        dom_id: '#swagger-ui',
+        deepLinking: true,
+        presets: [
+          SwaggerUIBundle.presets.apis,
+          SwaggerUIStandalonePreset
+        ],
+        plugins: [
+          SwaggerUIBundle.plugins.DownloadUrl,
+        ],
+        tagsSorter: 'alpha',
+        docExpansion: "none",
+        // defaultModelsExpandDepth: -1,
+        layout: "StandaloneLayout",
+        requestInterceptor: (req) => {
+          // ignore spec load
+          if (req.loadSpec ||
+            req.url.endsWith('/auth/reset') ||
+            req.url.endsWith('/auth/signup') ||
+            req.url.endsWith('/auth/verify') ||
+            req.url.endsWith('/auth/login') ||
+            req.url.endsWith('/system/health') ||
+            req.url.endsWith('/system/version')
+          ) {
+            return req;
+          }
+          if (sessionHeader) {
+            req.headers.authorization = sessionHeader;
+            return req;
+          }
+
+          let authorizationDone = false;
+          const promise = getSessionHeader(req.headers.authorization).finally(() => {
+            req.headers.authorization = sessionHeader;
+          });
+          // FIXME: fix this hack once https://github.com/swagger-api/swagger-ui/issues/4778 is resolved
+          promise.url = req.url;
+          promise.headers = req.headers;
+          return promise;
+        }
+      });
+      const getSessionHeader = (authHeader) => {
+        return new Promise((done, err) => {
+          $.ajax({
+            type: "POST",
+            url: "/api/platform/core/v1/auth/login",
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            async: false,
+            beforeSend: function (xhr) {
+              xhr.setRequestHeader("Authorization", authHeader);
+            },
+            success: function ({ sessionToken }) {
+              sessionHeader = `Basic ${btoa(sessionToken)}`;
+              done(sessionHeader);
+            },
+            error: err,
+            timeout: 5000
+          });
+        });
+      }
+
+      window.ui = ui
+    }
+  </script>
+</body>
+
+</html>

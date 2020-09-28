@@ -1,0 +1,411 @@
+swagger: "2.0"
+info:
+  title: Admin Core Service
+  description: Description goes here
+  version: "1.0.0"
+basePath: /api/platform/core/v1
+tags:
+  - name: Authentication
+  - name: User
+    description: Operations about user
+  - name: System
+    description: Service Monitoring probes
+#
+# format of bodies a client can send (Content-Type)
+consumes:
+  - application/json
+  - text/html
+  - text/plain
+# format of the responses to the client (Accepts)
+produces:
+  - application/json
+  - text/html
+  - text/plain
+securityDefinitions:
+  basicAuth:
+    type: basic
+# To apply Basic auth to the whole API:
+security:
+  - basicAuth: []
+paths:
+  /auth/reset:
+    x-swagger-router-controller: auth
+    post:
+      x-anonymous: true
+      tags:
+        - Authentication
+      description: reset auth
+      operationId: resetAuth
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: signupContent
+          description: The user to create.
+          schema:
+            type: object
+            required:
+              - userIdentity
+            properties:
+              userIdentity:
+                type: string
+      responses:
+        200:
+          description: Success
+          schema:
+            $ref: "#/definitions/VerificationTokenResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/StatusResponse"
+  /auth/signup:
+    x-swagger-router-controller: auth
+    post:
+      x-anonymous: true
+      tags:
+        - Authentication
+      description: Signup new user
+      operationId: signup
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: signupContent
+          description: The user to create.
+          schema:
+            type: object
+            required:
+              - role
+            properties:
+              email:
+                type: string
+              phone:
+                type: string
+              countryCode:
+                type: string
+              role:
+                type: string
+      responses:
+        200:
+          description: Success
+          schema:
+            $ref: "#/definitions/VerificationTokenResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/StatusResponse"
+  /auth/verify:
+    x-swagger-router-controller: auth
+    put:
+      x-anonymous: true
+      tags:
+        - Authentication
+      description: User verification using code
+      operationId: verify
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: user
+          description: The user to create.
+          schema:
+            type: object
+            required:
+              - tempSessionToken
+              - verificationCode
+            properties:
+              tempSessionToken:
+                type: string
+              verificationCode:
+                type: string
+              resetAll:
+                type: boolean
+      responses:
+        200:
+          description: Success
+          schema:
+            $ref: "#/definitions/VerificationResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/StatusResponse"
+  /auth/login:
+    x-swagger-router-controller: auth
+    post:
+      x-anonymous: true
+      tags:
+        - Authentication
+      description: Authentication
+      operationId: authenticate
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: auth
+          description: auth
+          schema:
+            type: object
+            properties:
+              userIdentity:
+                type: string
+              password:
+                type: string
+      responses:
+        200:
+          description: Success
+          schema:
+            type: object
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/StatusResponse"
+  /auth/logout:
+    x-swagger-router-controller: auth
+    get:
+      tags:
+        - Authentication
+      description: Authentication
+      operationId: logout
+      consumes:
+        - application/json
+      responses:
+        200:
+          description: Success
+          schema:
+            type: object
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/StatusResponse"
+  /auth/password:
+    x-swagger-router-controller: auth
+    put:
+      tags:
+        - Authentication
+      description: Update password
+      operationId: updatePassword
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: password
+          description: password.
+          schema:
+            type: object
+            required:
+              - password
+            properties:
+              lastPassword:
+                type: string
+              password:
+                type: string
+      responses:
+        200:
+          description: Success
+          schema:
+            type: object
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/StatusResponse"
+  /users:
+    x-swagger-router-controller: user
+    get:
+      tags:
+        - User
+      description: Read all users(Only of Super Admin)
+      operationId: getAllUsers
+      produces:
+        - application/json
+        - application/xml
+      responses:
+        200:
+          description: Success
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/User"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/StatusResponse"
+  /user/profile:
+    x-swagger-router-controller: user
+    get:
+      tags:
+        - User
+      description: Read user profile
+      operationId: getProfile
+      responses:
+        200:
+          description: Success
+          schema:
+            $ref: "#/definitions/UserProfile"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/StatusResponse"
+    put:
+      tags:
+        - User
+      description: Update user profile
+      operationId: updateProfile
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: user
+          description: The user to create.
+          schema:
+            $ref: "#/definitions/UserProfile"
+      responses:
+        202:
+          description: Success
+          schema:
+            $ref: "#/definitions/StatusResponse"
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/StatusResponse"
+  
+  /system/health:
+    x-swagger-router-controller: system
+    get:
+      x-anonymous: true
+      x-system: true
+      tags:
+        - System
+      description: Provides health check status
+      operationId: getHealth
+      responses:
+        200:
+          description: Success
+          schema:
+            $ref: "#/definitions/HealthResponse"
+  /system/version:
+    x-swagger-router-controller: system
+    get:
+      x-anonymous: true
+      x-system: true
+      tags:
+        - System
+      description: Provides the version number of the service
+      operationId: getVersion
+      responses:
+        200:
+          description: Success
+          schema:
+            $ref: "#/definitions/VersionResponse"
+
+# complex objects have schema definitions
+definitions:
+  Name:
+    description: name
+    type: object
+    properties:
+      first:
+        type: string
+      middle:
+        type: string
+      last:
+        type: string
+  Address:
+    description: address
+    type: object
+    properties:
+      city:
+        type: string
+      state:
+        type: string
+      country:
+        type: string
+      countryCode:
+        type: string
+  UserProfile:
+    description: User Profile details
+    type: object
+    properties:
+      name:
+        $ref: "#/definitions/Name"
+      address:
+        $ref: "#/definitions/Address"
+      employeeId:
+        type: string
+      image:
+        type: string
+      dob:
+        type: string
+        format: date
+  User:
+    description: User detail
+    type: object
+    properties:
+      id:
+        type: string
+      role:
+        type: string
+      supervisor:
+        $ref: "#/definitions/Supervisor"
+      profile:
+        $ref: "#/definitions/UserProfile"
+      isActive:
+        type: string
+      isArchived:
+        type: string
+      createdAt:
+        type: string
+      updatedAt:
+        type: string
+  Supervisor:
+    description: Supervisor detail
+    type: object
+    properties:
+      id:
+        type: string
+      role:
+        type: string
+      profile:
+        $ref: "#/definitions/UserProfile"
+      isActive:
+        type: string
+      isArchived:
+        type: string
+      createdAt:
+        type: string
+      updatedAt:
+        type: string
+  VersionResponse:
+    description: Version details
+    type: object
+    properties:
+      version:
+        type: string
+  HealthResponse:
+    description: Health Response
+    type: object
+    properties:
+      status:
+        type: string
+  VerificationTokenResponse:
+    type: object
+    properties:
+      message:
+        type: string
+      tempSessionToken:
+        type: string
+  VerificationResponse:
+    type: object
+    properties:
+      message:
+        type: string
+      sessionToken:
+        type: string
+      secretToken:
+        type: string
+  StatusResponse:
+    type: object
+    properties:
+      success:
+        type: boolean
+      message:
+        type: string
